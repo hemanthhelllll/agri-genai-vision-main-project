@@ -2,7 +2,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Brain, Dna, Sprout, BarChart3, CloudRain, Thermometer } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import heroImage from "@/assets/hero-farm.jpg";
+import heroImage from "@/assets/ai-farming-hero.jpg";
+import aiPredictionImg from "@/assets/ai-prediction.jpg";
+import geneticAlgorithmImg from "@/assets/genetic-algorithm.jpg";
+import dataAnalyticsImg from "@/assets/data-analytics.jpg";
+import weatherImg from "@/assets/weather-integration.jpg";
+import soilAnalysisImg from "@/assets/soil-analysis.jpg";
+import cropRecommendationsImg from "@/assets/crop-recommendations.jpg";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -43,7 +49,14 @@ const Index = () => {
         </h2>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card className="shadow-soft hover:shadow-medium transition-all duration-300 border-2 border-border hover:border-primary/50">
+          <Card className="shadow-soft hover:shadow-medium transition-all duration-300 border-2 border-border hover:border-primary/50 overflow-hidden group">
+            <div className="h-48 overflow-hidden">
+              <img 
+                src={aiPredictionImg} 
+                alt="AI Neural Networks visualization" 
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" 
+              />
+            </div>
             <CardHeader>
               <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                 <Brain className="h-6 w-6 text-primary" />
@@ -60,7 +73,14 @@ const Index = () => {
             </CardContent>
           </Card>
 
-          <Card className="shadow-soft hover:shadow-medium transition-all duration-300 border-2 border-border hover:border-secondary/50">
+          <Card className="shadow-soft hover:shadow-medium transition-all duration-300 border-2 border-border hover:border-secondary/50 overflow-hidden group">
+            <div className="h-48 overflow-hidden">
+              <img 
+                src={geneticAlgorithmImg} 
+                alt="Genetic Algorithms DNA visualization" 
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" 
+              />
+            </div>
             <CardHeader>
               <div className="h-12 w-12 rounded-lg bg-secondary/10 flex items-center justify-center mb-4">
                 <Dna className="h-6 w-6 text-secondary" />
@@ -77,7 +97,14 @@ const Index = () => {
             </CardContent>
           </Card>
 
-          <Card className="shadow-soft hover:shadow-medium transition-all duration-300 border-2 border-border hover:border-accent/50">
+          <Card className="shadow-soft hover:shadow-medium transition-all duration-300 border-2 border-border hover:border-accent/50 overflow-hidden group">
+            <div className="h-48 overflow-hidden">
+              <img 
+                src={dataAnalyticsImg} 
+                alt="Data Analytics dashboard" 
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" 
+              />
+            </div>
             <CardHeader>
               <div className="h-12 w-12 rounded-lg bg-accent/10 flex items-center justify-center mb-4">
                 <BarChart3 className="h-6 w-6 text-accent" />
@@ -94,7 +121,14 @@ const Index = () => {
             </CardContent>
           </Card>
 
-          <Card className="shadow-soft hover:shadow-medium transition-all duration-300 border-2 border-border hover:border-chart-1/50">
+          <Card className="shadow-soft hover:shadow-medium transition-all duration-300 border-2 border-border hover:border-chart-1/50 overflow-hidden group">
+            <div className="h-48 overflow-hidden">
+              <img 
+                src={weatherImg} 
+                alt="Weather Integration cloud patterns" 
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" 
+              />
+            </div>
             <CardHeader>
               <div className="h-12 w-12 rounded-lg bg-chart-1/10 flex items-center justify-center mb-4">
                 <CloudRain className="h-6 w-6 text-chart-1" />
@@ -111,7 +145,14 @@ const Index = () => {
             </CardContent>
           </Card>
 
-          <Card className="shadow-soft hover:shadow-medium transition-all duration-300 border-2 border-border hover:border-chart-2/50">
+          <Card className="shadow-soft hover:shadow-medium transition-all duration-300 border-2 border-border hover:border-chart-2/50 overflow-hidden group">
+            <div className="h-48 overflow-hidden">
+              <img 
+                src={soilAnalysisImg} 
+                alt="Soil Analysis layered earth" 
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" 
+              />
+            </div>
             <CardHeader>
               <div className="h-12 w-12 rounded-lg bg-chart-2/10 flex items-center justify-center mb-4">
                 <Thermometer className="h-6 w-6 text-chart-2" />
@@ -128,7 +169,14 @@ const Index = () => {
             </CardContent>
           </Card>
 
-          <Card className="shadow-soft hover:shadow-medium transition-all duration-300 border-2 border-border hover:border-chart-3/50">
+          <Card className="shadow-soft hover:shadow-medium transition-all duration-300 border-2 border-border hover:border-chart-3/50 overflow-hidden group">
+            <div className="h-48 overflow-hidden">
+              <img 
+                src={cropRecommendationsImg} 
+                alt="Crop Recommendations with wheat and corn" 
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" 
+              />
+            </div>
             <CardHeader>
               <div className="h-12 w-12 rounded-lg bg-chart-3/10 flex items-center justify-center mb-4">
                 <Sprout className="h-6 w-6 text-chart-3" />
