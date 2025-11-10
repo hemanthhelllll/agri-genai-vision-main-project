@@ -6,9 +6,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { PredictionChart } from "@/components/PredictionChart";
 import { GeneticAlgorithmViz } from "@/components/GeneticAlgorithmViz";
-import { Sprout, Brain, Dna, TrendingUp, MapPin, Cloud } from "lucide-react";
+import { Sprout, Brain, Dna, TrendingUp, MapPin, Cloud, Shield, Leaf, Droplets, Bug, Zap, Thermometer } from "lucide-react";
 import { toast } from "sonner";
 import { useWeatherData } from "@/hooks/useWeatherData";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const Dashboard = () => {
   const [predicting, setPredicting] = useState(false);
@@ -20,6 +21,14 @@ const Dashboard = () => {
   const [rainfall, setRainfall] = useState("");
   const [location, setLocation] = useState({ lat: 40.7128, lon: -74.0060 }); // Default: New York
   const [fetchWeather, setFetchWeather] = useState(false);
+  const [geneticTraits, setGeneticTraits] = useState({
+    pestResistance: false,
+    highYield: false,
+    droughtTolerance: false,
+    diseaseResistance: false,
+    fastGrowth: false,
+    climateAdaptability: false,
+  });
 
   const { weatherData, loading: weatherLoading } = useWeatherData({
     latitude: location.lat,
@@ -45,14 +54,27 @@ const Dashboard = () => {
       return;
     }
 
+    const selectedTraits = Object.entries(geneticTraits)
+      .filter(([_, selected]) => selected)
+      .map(([trait]) => trait);
+
+    if (selectedTraits.length === 0) {
+      toast.error("Please select at least one genetic trait");
+      return;
+    }
+
     setPredicting(true);
     
-    // Simulate AI + Genetic Algorithm processing
+    // Simulate AI + Genetic Algorithm processing with selected traits
     setTimeout(() => {
       setPredicting(false);
       setShowResults(true);
-      toast.success("Prediction completed successfully!");
+      toast.success(`Prediction completed with ${selectedTraits.length} genetic traits optimized!`);
     }, 2000);
+  };
+
+  const toggleTrait = (trait: keyof typeof geneticTraits) => {
+    setGeneticTraits(prev => ({ ...prev, [trait]: !prev[trait] }));
   };
 
   return (
@@ -239,7 +261,100 @@ const Dashboard = () => {
                 />
               </div>
 
-              <Button 
+              <div className="bg-muted/50 p-4 rounded-lg border border-border">
+                <div className="flex items-center gap-2 mb-3">
+                  <Dna className="h-5 w-5 text-secondary" />
+                  <Label>Genetic Trait Selection</Label>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="pestResistance"
+                      checked={geneticTraits.pestResistance}
+                      onCheckedChange={() => toggleTrait('pestResistance')}
+                    />
+                    <label
+                      htmlFor="pestResistance"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Bug className="h-4 w-4 text-primary" />
+                      Pest Resistance
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="highYield"
+                      checked={geneticTraits.highYield}
+                      onCheckedChange={() => toggleTrait('highYield')}
+                    />
+                    <label
+                      htmlFor="highYield"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <TrendingUp className="h-4 w-4 text-accent" />
+                      High Yield
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="droughtTolerance"
+                      checked={geneticTraits.droughtTolerance}
+                      onCheckedChange={() => toggleTrait('droughtTolerance')}
+                    />
+                    <label
+                      htmlFor="droughtTolerance"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Droplets className="h-4 w-4 text-primary" />
+                      Drought Tolerance
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="diseaseResistance"
+                      checked={geneticTraits.diseaseResistance}
+                      onCheckedChange={() => toggleTrait('diseaseResistance')}
+                    />
+                    <label
+                      htmlFor="diseaseResistance"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Shield className="h-4 w-4 text-secondary" />
+                      Disease Resistance
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="fastGrowth"
+                      checked={geneticTraits.fastGrowth}
+                      onCheckedChange={() => toggleTrait('fastGrowth')}
+                    />
+                    <label
+                      htmlFor="fastGrowth"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Zap className="h-4 w-4 text-accent" />
+                      Fast Growth
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="climateAdaptability"
+                      checked={geneticTraits.climateAdaptability}
+                      onCheckedChange={() => toggleTrait('climateAdaptability')}
+                    />
+                    <label
+                      htmlFor="climateAdaptability"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Thermometer className="h-4 w-4 text-primary" />
+                      Climate Adaptability
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <Button
                 onClick={handlePredict} 
                 disabled={predicting}
                 className="w-full"
