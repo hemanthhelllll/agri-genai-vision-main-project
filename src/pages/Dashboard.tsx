@@ -6,12 +6,39 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { PredictionChart } from "@/components/PredictionChart";
 import { GeneticAlgorithmViz } from "@/components/GeneticAlgorithmViz";
-import { Sprout, Brain, Dna, TrendingUp, MapPin, Cloud, Shield, Leaf, Droplets, Bug, Zap, Thermometer, FileDown } from "lucide-react";
+import { Sprout, Brain, Dna, TrendingUp, MapPin, Cloud, Shield, Leaf, Droplets, Bug, Zap, Thermometer, FileDown, Check } from "lucide-react";
 import { toast } from "sonner";
 import { useWeatherData } from "@/hooks/useWeatherData";
 import { Checkbox } from "@/components/ui/checkbox";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import wheatImg from "@/assets/crops/wheat.jpg";
+import riceImg from "@/assets/crops/rice.jpg";
+import cornImg from "@/assets/crops/corn.jpg";
+import cottonImg from "@/assets/crops/cotton.jpg";
+import tomatoImg from "@/assets/crops/tomato.jpg";
+import potatoImg from "@/assets/crops/potato.jpg";
+import soybeanImg from "@/assets/crops/soybean.jpg";
+import sugarcaneImg from "@/assets/crops/sugarcane.jpg";
+import barleyImg from "@/assets/crops/barley.jpg";
+import coffeeImg from "@/assets/crops/coffee.jpg";
+import teaImg from "@/assets/crops/tea.jpg";
+import mustardImg from "@/assets/crops/mustard.jpg";
+
+const crops = [
+  { id: "wheat", name: "Wheat", image: wheatImg },
+  { id: "rice", name: "Rice", image: riceImg },
+  { id: "corn", name: "Corn", image: cornImg },
+  { id: "cotton", name: "Cotton", image: cottonImg },
+  { id: "tomato", name: "Tomato", image: tomatoImg },
+  { id: "potato", name: "Potato", image: potatoImg },
+  { id: "soybean", name: "Soybean", image: soybeanImg },
+  { id: "sugarcane", name: "Sugarcane", image: sugarcaneImg },
+  { id: "barley", name: "Barley", image: barleyImg },
+  { id: "coffee", name: "Coffee", image: coffeeImg },
+  { id: "tea", name: "Tea", image: teaImg },
+  { id: "mustard", name: "Mustard", image: mustardImg },
+];
 
 const Dashboard = () => {
   const [predicting, setPredicting] = useState(false);
@@ -104,7 +131,7 @@ const Dashboard = () => {
     }
 
     // Crop-specific recommendations
-    if (cropType === 'wheat' || cropType === 'rice') {
+    if (cropType === 'wheat' || cropType === 'rice' || cropType === 'barley') {
       recommendations.push({ trait: 'diseaseResistance', reason: `${cropType} is susceptible to diseases` });
       recommendations.push({ trait: 'highYield', reason: 'Staple crop optimization' });
     } else if (cropType === 'corn') {
@@ -113,6 +140,27 @@ const Dashboard = () => {
     } else if (cropType === 'cotton') {
       recommendations.push({ trait: 'pestResistance', reason: 'Cotton bollworm risk' });
       recommendations.push({ trait: 'droughtTolerance', reason: 'Cotton requires water management' });
+    } else if (cropType === 'tomato') {
+      recommendations.push({ trait: 'diseaseResistance', reason: 'Tomatoes prone to fungal diseases' });
+      recommendations.push({ trait: 'pestResistance', reason: 'Protection from aphids and whiteflies' });
+    } else if (cropType === 'potato') {
+      recommendations.push({ trait: 'diseaseResistance', reason: 'Late blight prevention' });
+      recommendations.push({ trait: 'highYield', reason: 'Maximize tuber production' });
+    } else if (cropType === 'soybean') {
+      recommendations.push({ trait: 'diseaseResistance', reason: 'Soybean rust prevention' });
+      recommendations.push({ trait: 'droughtTolerance', reason: 'Water stress management' });
+    } else if (cropType === 'sugarcane') {
+      recommendations.push({ trait: 'pestResistance', reason: 'Borer insect protection' });
+      recommendations.push({ trait: 'fastGrowth', reason: 'Long growing season optimization' });
+    } else if (cropType === 'coffee') {
+      recommendations.push({ trait: 'diseaseResistance', reason: 'Coffee rust prevention' });
+      recommendations.push({ trait: 'climateAdaptability', reason: 'Temperature sensitivity' });
+    } else if (cropType === 'tea') {
+      recommendations.push({ trait: 'diseaseResistance', reason: 'Blister blight prevention' });
+      recommendations.push({ trait: 'climateAdaptability', reason: 'Climate specific cultivation' });
+    } else if (cropType === 'mustard') {
+      recommendations.push({ trait: 'pestResistance', reason: 'Aphid protection' });
+      recommendations.push({ trait: 'fastGrowth', reason: 'Short growing season' });
     }
 
     // Soil-based recommendations
@@ -454,20 +502,38 @@ const Dashboard = () => {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="crop">Crop Type</Label>
-                <Select value={cropType} onValueChange={setCropType}>
-                  <SelectTrigger id="crop">
-                    <SelectValue placeholder="Select crop" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="wheat">Wheat</SelectItem>
-                    <SelectItem value="rice">Rice</SelectItem>
-                    <SelectItem value="corn">Corn</SelectItem>
-                    <SelectItem value="soybean">Soybean</SelectItem>
-                    <SelectItem value="cotton">Cotton</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="space-y-3">
+                <Label>Select Crop Type</Label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {crops.map((crop) => (
+                    <button
+                      key={crop.id}
+                      onClick={() => setCropType(crop.id)}
+                      className={`relative group overflow-hidden rounded-lg border-2 transition-all ${
+                        cropType === crop.id
+                          ? "border-primary ring-2 ring-primary/20"
+                          : "border-border hover:border-primary/50"
+                      }`}
+                    >
+                      <div className="aspect-[4/3] overflow-hidden">
+                        <img
+                          src={crop.image}
+                          alt={crop.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                      <div className="absolute bottom-0 left-0 right-0 p-2 text-white">
+                        <p className="text-sm font-semibold">{crop.name}</p>
+                      </div>
+                      {cropType === crop.id && (
+                        <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1">
+                          <Check className="h-4 w-4" />
+                        </div>
+                      )}
+                     </button>
+                   ))}
+                 </div>
               </div>
 
               <div className="space-y-2">
