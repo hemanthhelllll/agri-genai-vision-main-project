@@ -37,12 +37,32 @@ export const useWeatherData = ({ latitude, longitude, enabled = false }: UseWeat
 
         const data = await response.json();
 
-        // Get location name from geocoding API
-        const geoResponse = await fetch(
-          `https://geocoding-api.open-meteo.com/v1/search?latitude=${latitude}&longitude=${longitude}&count=1`
-        );
-        const geoData = await geoResponse.json();
-        const locationName = geoData.results?.[0]?.name || 'Unknown Location';
+        // Get location name using reverse geocoding from OpenStreetMap Nominatim
+        let locationName = 'Unknown Location';
+        try {
+          const geoResponse = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=en`,
+            {
+              headers: {
+                'User-Agent': 'Smart-Crop-Forecasting-App'
+              }
+            }
+          );
+          
+          if (geoResponse.ok) {
+            const geoData = await geoResponse.json();
+            // Try to get city, town, or village name, fallback to display_name
+            locationName = geoData.address?.city || 
+                          geoData.address?.town || 
+                          geoData.address?.village || 
+                          geoData.address?.state ||
+                          geoData.display_name?.split(',')[0] || 
+                          'Unknown Location';
+          }
+        } catch (geoError) {
+          console.error('Geocoding error:', geoError);
+          // Keep default 'Unknown Location'
+        }
 
         setWeatherData({
           temperature: Math.round(data.current.temperature_2m),

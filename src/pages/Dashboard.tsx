@@ -62,6 +62,35 @@ const Dashboard = () => {
     enabled: fetchWeather,
   });
 
+  // Auto-detect location on component mount
+  useEffect(() => {
+    const autoDetectLocation = () => {
+      if (!navigator.geolocation) {
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          setLocation({ lat: latitude, lon: longitude });
+          setFetchWeather(true);
+          toast.success("Location detected automatically!");
+        },
+        (error) => {
+          console.log("Auto-detection skipped:", error.message);
+          // Silently fail - user can manually trigger if needed
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0,
+        }
+      );
+    };
+
+    autoDetectLocation();
+  }, []); // Run once on mount
+
   useEffect(() => {
     if (weatherData) {
       setTemperature(weatherData.temperature.toString());
