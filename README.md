@@ -1,48 +1,24 @@
-# Welcome to our project
-🌾 Agri-GenAI Vision — Smart Agriculture Image Analysis
+# Welcome to your Lovable project
 
-**Overview**
+## Project info
 
-Agri-GenAI Vision is an AI-powered web application that helps farmers and agricultural planners choose the best crop to grow under given environmental conditions.
-By analyzing factors such as soil type, temperature, rainfall, humidity, and season, the system uses machine learning and generative AI to predict the most suitable crop and provide helpful insights.
+**URL**: https://lovable.dev/projects/953ad14b-cc5b-49be-9b43-f86375220e0b
 
-**Objective**
+## How can I edit this code?
 
-To enable data-driven farming decisions by recommending the most profitable and sustainable crops for a given location — improving yield, reducing risk, and supporting smart agriculture.
+There are several ways of editing your application.
 
-**Features**
+**Use Lovable**
 
-	•	🌱 Crop Recommendation – Predicts the ideal crop based on user inputs (soil, weather, region, etc.).
-	•	📊 AI-based Prediction Model – Uses ML algorithms trained on agricultural datasets.
-	•	💬 Generative Insights – Provides smart suggestions and explanations for predictions.
-	•	⚡ Modern Web Interface – Fast, responsive UI built with React, TypeScript, Tailwind, and shadcn-ui.
-	•	☁ Easy Deployment – Works seamlessly on web or mobile browsers.
+Simply visit the [Lovable Project](https://lovable.dev/projects/953ad14b-cc5b-49be-9b43-f86375220e0b) and start prompting.
+
+Changes made via Lovable will be committed automatically to this repo.
 
 **Use your preferred IDE**
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. 
+If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
 
 The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-**📁 Folder Structure**
-
-agri-genai-vision-main-project/
-│
-├── src/
-│   ├── components/        # UI components
-│   ├── pages/             # Home, InputForm, Result
-│   ├── assets/            # Icons, images
-│   ├── services/          # API calls to backend
-│   ├── App.tsx            # Main React app
-│   └── main.tsx
-│
-├── public/
-│   └── index.html
-│
-├── package.json
-├── tailwind.config.ts
-├── tsconfig.json
-└── README.md
 
 Follow these steps:
 
@@ -84,28 +60,14 @@ This project is built with:
 - shadcn-ui
 - Tailwind CSS
 
-**🧠 How It Works**
- 
-	1.	User inputs parameters such as soil type, temperature, humidity, rainfall, and pH value.
-	2.	The data is sent to the backend API or ML model.
-	3.	The model analyzes the input using trained data.
-	4.	The system predicts the best crop to cultivate.
-	5.	The AI layer explains why that crop is suitable and provides growing tips.
- 
-  **Future Enhancements**
-  
-	•	🌦 Real-time weather API integration
-	•	🌍 GPS-based automatic location detection
-	•	🪴 Fertilizer and irrigation suggestions
-	•	📱 Progressive Web App (PWA) support
-	•	🤖 Chatbot for agricultural queries
+## How can I deploy this project?
 
-  **License**
-This project is licensed under the MIT License — feel free to use and modify it.
+Simply open [Lovable](https://lovable.dev/projects/953ad14b-cc5b-49be-9b43-f86375220e0b) and click on Share -> Publish.
 
-**Contributors**
-	•	Hemanth — Project Lead & Developer- kiran kumar, jagadeesh ,lalith kumar
+## Can I connect a custom domain to my Lovable project?
 
-  **Suggested GitHub Topics**
-  agriculture ai, crop prediction, machine learning, generative ai, react, vite, tailwind, soil analysis, smart farming, agri-tech
+Yes, you can!
 
+To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+
+Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
