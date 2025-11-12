@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { PredictionChart } from "@/components/PredictionChart";
 import { GeneticAlgorithmViz } from "@/components/GeneticAlgorithmViz";
-import { Sprout, Brain, Dna, TrendingUp, ArrowLeft, FileDown, MapPin } from "lucide-react";
+import { Sprout, Brain, Dna, TrendingUp, ArrowLeft, FileDown, MapPin, Lightbulb, Droplets, Sun, Bug, Leaf } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
@@ -38,6 +38,122 @@ const Results = () => {
   const selectedTraits = Object.entries(predictionData.geneticTraits)
     .filter(([_, selected]) => selected)
     .map(([trait]) => trait.replace(/([A-Z])/g, ' $1').trim());
+
+  const getGrowingTips = () => {
+    const tips: Array<{ icon: any; title: string; tip: string; category: string }> = [];
+    const temp = parseFloat(predictionData.temperature);
+    const rain = parseFloat(predictionData.rainfall);
+
+    // Temperature-based tips
+    if (temp > 30) {
+      tips.push({
+        icon: Sun,
+        title: "High Temperature Management",
+        tip: "Provide shade during peak sun hours (11 AM - 3 PM). Use mulching to keep soil cool and retain moisture. Consider drip irrigation for efficient water use.",
+        category: "temperature"
+      });
+    } else if (temp < 15) {
+      tips.push({
+        icon: Sun,
+        title: "Cold Protection",
+        tip: "Use row covers or polytunnels to protect crops from frost. Plant during warmer parts of the day. Consider cold-hardy varieties for better results.",
+        category: "temperature"
+      });
+    }
+
+    // Rainfall-based tips
+    if (rain < 500) {
+      tips.push({
+        icon: Droplets,
+        title: "Water Conservation",
+        tip: "Install drip irrigation system to maximize water efficiency. Mulch heavily to retain soil moisture. Schedule watering early morning or late evening to reduce evaporation.",
+        category: "water"
+      });
+    } else if (rain > 1500) {
+      tips.push({
+        icon: Droplets,
+        title: "Drainage Management",
+        tip: "Ensure proper field drainage to prevent waterlogging. Create raised beds for better water runoff. Monitor for fungal diseases due to high moisture.",
+        category: "water"
+      });
+    }
+
+    // Crop-specific tips
+    const cropTips: Record<string, string> = {
+      wheat: "Monitor for rust diseases. Apply balanced NPK fertilizer at tillering stage. Ensure proper seed spacing for optimal air circulation.",
+      rice: "Maintain water level at 2-3 inches during vegetative stage. Watch for blast disease in humid conditions. Apply nitrogen in split doses.",
+      corn: "Scout regularly for corn borers and armyworms. Side-dress with nitrogen at knee-high stage. Ensure adequate spacing for pollination.",
+      cotton: "Monitor for bollworm and whitefly infestations. Apply potassium at flowering stage. Remove early square shedding to improve yields.",
+      tomato: "Stake plants early for support. Prune suckers for better fruit quality. Watch for early and late blight symptoms.",
+      potato: "Hill up soil around plants to prevent greening. Monitor for late blight especially in humid weather. Harvest when foliage dies back.",
+      soybean: "Inoculate seeds with rhizobium for better nitrogen fixation. Control weeds early as they compete heavily. Watch for soybean rust.",
+      sugarcane: "Apply organic matter to improve soil structure. Control borers with regular scouting. Earthing up helps in root development.",
+      barley: "Ensure good drainage as barley is sensitive to waterlogging. Monitor for powdery mildew. Harvest at proper moisture content.",
+      coffee: "Provide partial shade in hot climates. Maintain organic mulch layer. Prune regularly for better air circulation and yield.",
+      tea: "Maintain acidic soil pH (4.5-5.5). Regular light pruning promotes new flush growth. Apply nitrogen-rich fertilizers during growing season.",
+      mustard: "Control aphids early as they can severely damage crop. Ensure proper seed rate for optimal plant density. Harvest when pods turn brown."
+    };
+
+    if (cropTips[predictionData.cropType]) {
+      tips.push({
+        icon: Leaf,
+        title: `${predictionData.cropType.charAt(0).toUpperCase() + predictionData.cropType.slice(1)}-Specific Care`,
+        tip: cropTips[predictionData.cropType],
+        category: "crop"
+      });
+    }
+
+    // Soil-specific tips
+    const soilTips: Record<string, string> = {
+      sandy: "Add organic matter to improve water retention. Apply fertilizers in smaller, frequent doses as sandy soil has low nutrient holding capacity. Mulch heavily to prevent erosion.",
+      clay: "Improve drainage by adding organic compost. Avoid overworking soil when wet. Add gypsum to improve soil structure and reduce compaction.",
+      loamy: "Maintain organic matter through composting. This ideal soil type benefits from crop rotation. Regular soil testing ensures nutrient balance.",
+      black: "This fertile soil retains moisture well but ensure good drainage. Regular deep plowing prevents hardpan formation. Ideal for most crops.",
+      red: "Add lime to correct acidity if needed. Supplement with organic matter to improve fertility. Good for drought-resistant crops."
+    };
+
+    if (soilTips[predictionData.soilType]) {
+      tips.push({
+        icon: Leaf,
+        title: `${predictionData.soilType.charAt(0).toUpperCase() + predictionData.soilType.slice(1)} Soil Management`,
+        tip: soilTips[predictionData.soilType],
+        category: "soil"
+      });
+    }
+
+    // Season-specific tips
+    const seasonTips: Record<string, string> = {
+      summer: "Increase irrigation frequency. Use reflective mulch to reduce soil temperature. Consider planting heat-tolerant varieties.",
+      winter: "Protect from frost using covers. Reduce watering frequency. Choose cold-hardy varieties for better survival.",
+      monsoon: "Ensure excellent drainage to prevent waterlogging. Watch for increased pest and disease pressure. Use disease-resistant varieties.",
+      spring: "Ideal time for planting. Prepare soil with organic matter. Monitor for early season pests as temperatures rise.",
+      autumn: "Good for cool-season crops. Apply balanced fertilizers. Harvest summer crops before first frost."
+    };
+
+    if (seasonTips[predictionData.season]) {
+      tips.push({
+        icon: Sun,
+        title: `${predictionData.season.charAt(0).toUpperCase() + predictionData.season.slice(1)} Season Tips`,
+        tip: seasonTips[predictionData.season],
+        category: "season"
+      });
+    }
+
+    // Pest management tip based on genetic traits
+    const hasPestResistance = predictionData.geneticTraits.pestResistance;
+    if (!hasPestResistance) {
+      tips.push({
+        icon: Bug,
+        title: "Pest Management",
+        tip: "Implement integrated pest management (IPM). Use pheromone traps for monitoring. Apply neem-based organic pesticides as first line of defense. Scout fields regularly for early detection.",
+        category: "pest"
+      });
+    }
+
+    return tips;
+  };
+
+  const growingTips = getGrowingTips();
 
   const generatePDFReport = async () => {
     toast.info("Generating PDF report...");
@@ -338,6 +454,36 @@ const Results = () => {
             </CardContent>
           </Card>
         </div>
+
+        <Card className="shadow-medium mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Lightbulb className="h-5 w-5 text-primary" />
+              Growing Tips for Best Results
+            </CardTitle>
+            <CardDescription>Actionable recommendations based on your conditions</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid md:grid-cols-2 gap-4">
+              {growingTips.map((tip, index) => {
+                const Icon = tip.icon;
+                return (
+                  <div key={index} className="p-4 rounded-lg border border-border bg-muted/30 hover:bg-muted/50 transition-colors">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <Icon className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-sm mb-2">{tip.title}</h4>
+                        <p className="text-sm text-muted-foreground leading-relaxed">{tip.tip}</p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="grid lg:grid-cols-2 gap-6">
           <div data-chart>

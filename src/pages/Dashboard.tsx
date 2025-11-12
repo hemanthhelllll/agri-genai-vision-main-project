@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { LocationMap } from "@/components/LocationMap";
-import { Sprout, Brain, Dna, TrendingUp, MapPin, Cloud, Shield, Leaf, Droplets, Bug, Zap, Thermometer, Check } from "lucide-react";
+import { Sprout, Brain, Dna, TrendingUp, Cloud, Shield, Leaf, Droplets, Bug, Zap, Thermometer, Check, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { useWeatherData } from "@/hooks/useWeatherData";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -48,12 +47,6 @@ const Dashboard = () => {
   const [rainfall, setRainfall] = useState("");
   const [location, setLocation] = useState({ lat: 40.7128, lon: -74.0060 }); // Default: New York
   const [fetchWeather, setFetchWeather] = useState(false);
-  const [showMap, setShowMap] = useState(false);
-
-  const handleLocationSelect = (lat: number, lon: number) => {
-    setLocation({ lat, lon });
-    toast.success("Location updated on map");
-  };
   const [geneticTraits, setGeneticTraits] = useState({
     pestResistance: false,
     highYield: false,
@@ -76,33 +69,6 @@ const Dashboard = () => {
       toast.success(`Weather data loaded for ${weatherData.location}`);
     }
   }, [weatherData]);
-
-  const handleGetCurrentLocation = () => {
-    if (!navigator.geolocation) {
-      toast.error("Geolocation is not supported by your browser");
-      return;
-    }
-
-    toast.info("Detecting your location...");
-
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        const { latitude, longitude } = position.coords;
-        setLocation({ lat: latitude, lon: longitude });
-        setFetchWeather(true);
-        toast.success("Location detected successfully!");
-      },
-      (error) => {
-        toast.error("Unable to detect location. Please enter coordinates manually.");
-        console.error("Geolocation error:", error);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 0,
-      }
-    );
-  };
 
   const handleFetchWeather = () => {
     setFetchWeather(true);
@@ -326,43 +292,16 @@ const Dashboard = () => {
                     <Cloud className="h-5 w-5 text-primary" />
                     <Label>Location & Weather Data</Label>
                   </div>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={() => setShowMap(!showMap)}
-                      variant="outline"
-                      size="sm"
-                      className="gap-2"
-                    >
-                      <MapPin className="h-4 w-4" />
-                      {showMap ? "Hide Map" : "Show Map"}
-                    </Button>
-                    <Button
-                      onClick={handleGetCurrentLocation}
-                      disabled={weatherLoading}
-                      variant="default"
-                      size="sm"
-                      className="gap-2"
-                    >
-                      <MapPin className="h-4 w-4" />
-                      Auto-Detect
-                    </Button>
-                    <Button
-                      onClick={handleFetchWeather}
-                      disabled={weatherLoading}
-                      variant="outline"
-                      size="sm"
-                    >
-                      {weatherLoading ? "Loading..." : "Fetch Weather"}
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={handleFetchWeather}
+                    disabled={weatherLoading}
+                    variant="default"
+                    size="sm"
+                  >
+                    {weatherLoading ? "Loading..." : "Fetch Weather"}
+                  </Button>
                 </div>
                 
-                {showMap && (
-                  <div className="mb-4">
-                    <p className="text-xs text-muted-foreground mb-2">Click on the map to select your farm location</p>
-                    <LocationMap location={location} onLocationSelect={handleLocationSelect} />
-                  </div>
-                )}
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div className="space-y-2">
                     <Label htmlFor="lat" className="text-xs text-muted-foreground">Latitude</Label>
