@@ -45,8 +45,9 @@ const Dashboard = () => {
   const [season, setSeason] = useState("");
   const [temperature, setTemperature] = useState("");
   const [rainfall, setRainfall] = useState("");
-  const [location, setLocation] = useState({ lat: 40.7128, lon: -74.0060 }); // Default: New York
-  const [fetchWeather, setFetchWeather] = useState(false);
+  const [location, setLocation] = useState({ latitude: '', longitude: '' });
+  const [cityName, setCityName] = useState('');
+  const [isGettingLocation, setIsGettingLocation] = useState(false);
   const [geneticTraits, setGeneticTraits] = useState({
     pestResistance: false,
     highYield: false,
@@ -56,10 +57,11 @@ const Dashboard = () => {
     climateAdaptability: false,
   });
 
-  const { weatherData, loading: weatherLoading } = useWeatherData({
-    latitude: location.lat,
-    longitude: location.lon,
-    enabled: fetchWeather,
+  const { weatherData, loading: weatherLoading, error: weatherError } = useWeatherData({
+    latitude: location.latitude ? parseFloat(location.latitude) : undefined,
+    longitude: location.longitude ? parseFloat(location.longitude) : undefined,
+    cityName: cityName || undefined,
+    enabled: true,
   });
 
   // Auto-detect location on component mount
@@ -69,16 +71,17 @@ const Dashboard = () => {
         return;
       }
 
+      setIsGettingLocation(true);
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          setLocation({ lat: latitude, lon: longitude });
-          setFetchWeather(true);
+          setLocation({ latitude: latitude.toString(), longitude: longitude.toString() });
+          setIsGettingLocation(false);
           toast.success("Location detected automatically!");
         },
         (error) => {
           console.log("Auto-detection skipped:", error.message);
-          // Silently fail - user can manually trigger if needed
+          setIsGettingLocation(false);
         },
         {
           enableHighAccuracy: true,
@@ -89,7 +92,7 @@ const Dashboard = () => {
     };
 
     autoDetectLocation();
-  }, []); // Run once on mount
+  }, []);
 
   useEffect(() => {
     if (weatherData) {
@@ -99,595 +102,464 @@ const Dashboard = () => {
     }
   }, [weatherData]);
 
+  useEffect(() => {
+    if (weatherError) {
+      toast.error(weatherError);
+    }
+  }, [weatherError]);
 
   const handlePredict = () => {
     if (!cropType || !soilType || !season || !temperature || !rainfall) {
-      toast.error("Please fill all fields");
-      return;
-    }
-
-    const selectedTraits = Object.entries(geneticTraits)
-      .filter(([_, selected]) => selected)
-      .map(([trait]) => trait);
-
-    if (selectedTraits.length === 0) {
-      toast.error("Please select at least one genetic trait");
+      toast.error("Please fill in all fields");
       return;
     }
 
     setPredicting(true);
     
-    // Simulate AI + Genetic Algorithm processing with selected traits
     setTimeout(() => {
-      setPredicting(false);
-      toast.success(`Prediction completed with ${selectedTraits.length} genetic traits optimized!`);
+      const yieldPrediction = Math.floor(Math.random() * 40) + 60;
+      const geneticTraitsArray = Object.keys(geneticTraits).filter(key => geneticTraits[key as keyof typeof geneticTraits]);
       
-      // Navigate to results page with prediction data
       navigate("/results", {
         state: {
           cropType,
           soilType,
           season,
-          temperature,
-          rainfall,
-          geneticTraits,
-          location,
+          temperature: parseFloat(temperature),
+          rainfall: parseFloat(rainfall),
+          yieldPrediction,
+          geneticTraits: geneticTraitsArray,
           weatherData,
-          recommendedTraits: getRecommendedTraits(),
         },
       });
+      setPredicting(false);
     }, 2000);
   };
 
-  const toggleTrait = (trait: keyof typeof geneticTraits) => {
-    setGeneticTraits(prev => ({ ...prev, [trait]: !prev[trait] }));
+  const handleGeneticTraitChange = (trait: keyof typeof geneticTraits) => {
+    setGeneticTraits(prev => ({
+      ...prev,
+      [trait]: !prev[trait]
+    }));
   };
 
-  const getRecommendedTraits = () => {
-    const recommendations: { trait: keyof typeof geneticTraits; reason: string }[] = [];
-    
-    // Temperature-based recommendations
-    const temp = parseFloat(temperature);
-    if (!isNaN(temp)) {
-      if (temp > 30) {
-        recommendations.push({ trait: 'droughtTolerance', reason: 'High temperature detected' });
-        recommendations.push({ trait: 'climateAdaptability', reason: 'Extreme heat conditions' });
-      } else if (temp < 10) {
-        recommendations.push({ trait: 'climateAdaptability', reason: 'Cold climate conditions' });
-      }
-    }
-
-    // Rainfall-based recommendations
-    const rain = parseFloat(rainfall);
-    if (!isNaN(rain)) {
-      if (rain < 500) {
-        recommendations.push({ trait: 'droughtTolerance', reason: 'Low rainfall expected' });
-      } else if (rain > 1500) {
-        recommendations.push({ trait: 'diseaseResistance', reason: 'High moisture increases disease risk' });
-      }
-    }
-
-    // Crop-specific recommendations
-    if (cropType === 'wheat' || cropType === 'rice' || cropType === 'barley') {
-      recommendations.push({ trait: 'diseaseResistance', reason: `${cropType} is susceptible to diseases` });
-      recommendations.push({ trait: 'highYield', reason: 'Staple crop optimization' });
-    } else if (cropType === 'corn') {
-      recommendations.push({ trait: 'pestResistance', reason: 'Corn attracts various pests' });
-      recommendations.push({ trait: 'highYield', reason: 'High demand crop' });
-    } else if (cropType === 'cotton') {
-      recommendations.push({ trait: 'pestResistance', reason: 'Cotton bollworm risk' });
-      recommendations.push({ trait: 'droughtTolerance', reason: 'Cotton requires water management' });
-    } else if (cropType === 'tomato') {
-      recommendations.push({ trait: 'diseaseResistance', reason: 'Tomatoes prone to fungal diseases' });
-      recommendations.push({ trait: 'pestResistance', reason: 'Protection from aphids and whiteflies' });
-    } else if (cropType === 'potato') {
-      recommendations.push({ trait: 'diseaseResistance', reason: 'Late blight prevention' });
-      recommendations.push({ trait: 'highYield', reason: 'Maximize tuber production' });
-    } else if (cropType === 'soybean') {
-      recommendations.push({ trait: 'diseaseResistance', reason: 'Soybean rust prevention' });
-      recommendations.push({ trait: 'droughtTolerance', reason: 'Water stress management' });
-    } else if (cropType === 'sugarcane') {
-      recommendations.push({ trait: 'pestResistance', reason: 'Borer insect protection' });
-      recommendations.push({ trait: 'fastGrowth', reason: 'Long growing season optimization' });
-    } else if (cropType === 'coffee') {
-      recommendations.push({ trait: 'diseaseResistance', reason: 'Coffee rust prevention' });
-      recommendations.push({ trait: 'climateAdaptability', reason: 'Temperature sensitivity' });
-    } else if (cropType === 'tea') {
-      recommendations.push({ trait: 'diseaseResistance', reason: 'Blister blight prevention' });
-      recommendations.push({ trait: 'climateAdaptability', reason: 'Climate specific cultivation' });
-    } else if (cropType === 'mustard') {
-      recommendations.push({ trait: 'pestResistance', reason: 'Aphid protection' });
-      recommendations.push({ trait: 'fastGrowth', reason: 'Short growing season' });
-    }
-
-    // Soil-based recommendations
-    if (soilType === 'sandy') {
-      recommendations.push({ trait: 'droughtTolerance', reason: 'Sandy soil drains quickly' });
-    } else if (soilType === 'clay') {
-      recommendations.push({ trait: 'diseaseResistance', reason: 'Clay soil retains moisture' });
-    }
-
-    // Season-based recommendations
-    if (season === 'summer') {
-      recommendations.push({ trait: 'fastGrowth', reason: 'Maximize summer growing season' });
-    } else if (season === 'winter') {
-      recommendations.push({ trait: 'climateAdaptability', reason: 'Cold season adaptation' });
-    }
-
-    // Always recommend high yield as a baseline
-    if (!recommendations.some(r => r.trait === 'highYield')) {
-      recommendations.push({ trait: 'highYield', reason: 'Maximize productivity' });
-    }
-
-    // Remove duplicates
-    const uniqueRecommendations = recommendations.reduce((acc, curr) => {
-      if (!acc.find(r => r.trait === curr.trait)) {
-        acc.push(curr);
-      }
-      return acc;
-    }, [] as typeof recommendations);
-
-    return uniqueRecommendations;
-  };
-
-  const applyRecommendations = () => {
-    const recommended = getRecommendedTraits();
-    const newTraits = { ...geneticTraits };
-    recommended.forEach(({ trait }) => {
-      newTraits[trait] = true;
-    });
-    setGeneticTraits(newTraits);
-    toast.success(`Applied ${recommended.length} recommended traits`);
-  };
-
-  const recommendedTraits = cropType && soilType && season && temperature && rainfall 
-    ? getRecommendedTraits() 
-    : [];
+  const selectedCrop = crops.find(crop => crop.id === cropType);
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card shadow-soft">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="flex items-center gap-3">
-                <Sprout className="h-8 w-8 text-primary" />
-                <h1 className="text-3xl font-bold text-foreground">Smart Crop Forecasting</h1>
-              </div>
-              <p className="text-muted-foreground mt-2">AI-Powered Agricultural Intelligence with Genetic Optimization</p>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto space-y-8">
+          <div className="text-center space-y-4 animate-fade-in">
+            <div className="flex items-center justify-center gap-3">
+              <Sprout className="w-12 h-12 text-primary" />
+              <h1 className="text-5xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                Smart Crop Forecasting
+              </h1>
             </div>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Optimize your harvest with AI-powered predictions and genetic insights
+            </p>
           </div>
-        </div>
-      </header>
 
-      <main className="container mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-3 gap-6 mb-8">
-          <Card className="shadow-soft hover:shadow-medium transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Brain className="h-5 w-5 text-primary" />
-                AI Prediction
-              </CardTitle>
-              <CardDescription>Neural network analysis</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-primary">94.5%</div>
-              <p className="text-sm text-muted-foreground mt-1">Accuracy Rate</p>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-soft hover:shadow-medium transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Dna className="h-5 w-5 text-secondary" />
-                Genetic Algorithm
-              </CardTitle>
-              <CardDescription>Optimization iterations</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-secondary">1,247</div>
-              <p className="text-sm text-muted-foreground mt-1">Generations</p>
-            </CardContent>
-          </Card>
-
-          <Card className="shadow-soft hover:shadow-medium transition-shadow">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-accent" />
-                Yield Improvement
-              </CardTitle>
-              <CardDescription>Projected increase</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-accent">+23.4%</div>
-              <p className="text-sm text-muted-foreground mt-1">vs Traditional</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        <div className="grid lg:grid-cols-2 gap-6">
-          <Card className="shadow-medium">
-            <CardHeader>
-              <CardTitle>Crop Prediction Parameters</CardTitle>
-              <CardDescription>Enter farming conditions for AI analysis</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="bg-muted/50 p-4 rounded-lg border border-border mb-4">
-                <div className="flex items-center gap-2 mb-3">
-                  <Cloud className="h-5 w-5 text-primary" />
-                  <Label>Location & Weather Forecast</Label>
-                  {weatherLoading && <span className="text-xs text-muted-foreground">(Loading...)</span>}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card className="shadow-lg hover:shadow-xl transition-all duration-300 border-primary/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-primary" />
+                  Location & Weather
+                </CardTitle>
+                <CardDescription>
+                  Enter city name or coordinates to get weather data
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="cityName">City Name</Label>
+                  <Input
+                    id="cityName"
+                    type="text"
+                    placeholder="e.g., New Delhi, London, Tokyo"
+                    value={cityName}
+                    onChange={(e) => setCityName(e.target.value)}
+                    disabled={isGettingLocation}
+                  />
                 </div>
                 
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="space-y-2">
-                    <Label htmlFor="lat" className="text-xs text-muted-foreground">Latitude</Label>
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">Or use coordinates</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="latitude">Latitude</Label>
                     <Input
-                      id="lat"
+                      id="latitude"
                       type="number"
-                      step="0.0001"
-                      value={location.lat}
-                      onChange={(e) => setLocation({ ...location, lat: parseFloat(e.target.value) })}
-                      className="h-8"
+                      step="any"
+                      placeholder="e.g., 28.6139"
+                      value={location.latitude}
+                      onChange={(e) => setLocation({ ...location, latitude: e.target.value })}
+                      disabled={isGettingLocation}
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="lon" className="text-xs text-muted-foreground">Longitude</Label>
+                  <div>
+                    <Label htmlFor="longitude">Longitude</Label>
                     <Input
-                      id="lon"
+                      id="longitude"
                       type="number"
-                      step="0.0001"
-                      value={location.lon}
-                      onChange={(e) => setLocation({ ...location, lon: parseFloat(e.target.value) })}
-                      className="h-8"
+                      step="any"
+                      placeholder="e.g., 77.2090"
+                      value={location.longitude}
+                      onChange={(e) => setLocation({ ...location, longitude: e.target.value })}
+                      disabled={isGettingLocation}
                     />
                   </div>
                 </div>
+
+                {weatherLoading && (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Cloud className="w-4 h-4 animate-pulse" />
+                    <span>Loading weather data...</span>
+                  </div>
+                )}
+
                 {weatherData && (
-                  <>
-                    <div className="mt-3 p-2 bg-background rounded border border-border">
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground mb-1">
-                        <MapPin className="h-3 w-3" />
-                        <span>{weatherData.location}</span>
+                  <div className="space-y-3 p-4 bg-primary/5 rounded-lg border border-primary/20">
+                    <div className="flex items-center gap-2 text-sm font-medium">
+                      <MapPin className="w-4 h-4 text-primary" />
+                      <span>{weatherData.location}</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex items-center gap-2">
+                        <Thermometer className="w-4 h-4 text-orange-500" />
+                        <span className="text-sm">{weatherData.temperature}°C</span>
                       </div>
-                      <div className="text-xs">
-                        Temp: {weatherData.temperature}°C | Humidity: {weatherData.humidity}%
+                      <div className="flex items-center gap-2">
+                        <Droplets className="w-4 h-4 text-blue-500" />
+                        <span className="text-sm">{weatherData.humidity}%</span>
                       </div>
                     </div>
-
-                    {/* Planting Window Recommendation */}
+                    
                     {weatherData.plantingWindow && (
-                      <div className={`mt-3 p-3 rounded-lg border ${
-                        weatherData.plantingWindow.recommended 
-                          ? 'bg-primary/5 border-primary/30' 
-                          : 'bg-destructive/5 border-destructive/30'
-                      }`}>
+                      <div className={`p-3 rounded-md ${weatherData.plantingWindow.recommended ? 'bg-green-500/10 border border-green-500/20' : 'bg-amber-500/10 border border-amber-500/20'}`}>
                         <div className="flex items-start gap-2">
-                          <div className={`p-1 rounded ${
-                            weatherData.plantingWindow.recommended 
-                              ? 'bg-primary/10' 
-                              : 'bg-destructive/10'
-                          }`}>
-                            {weatherData.plantingWindow.recommended ? (
-                              <Check className="h-4 w-4 text-primary" />
-                            ) : (
-                              <Cloud className="h-4 w-4 text-destructive" />
-                            )}
-                          </div>
+                          <Shield className={`w-4 h-4 mt-0.5 ${weatherData.plantingWindow.recommended ? 'text-green-600' : 'text-amber-600'}`} />
                           <div className="flex-1">
-                            <p className="text-xs font-semibold mb-1">
-                              {weatherData.plantingWindow.recommended ? 'Good Planting Window' : 'Unfavorable Conditions'}
+                            <p className={`text-sm font-medium ${weatherData.plantingWindow.recommended ? 'text-green-700' : 'text-amber-700'}`}>
+                              {weatherData.plantingWindow.recommended ? 'Good Planting Window' : 'Caution Advised'}
                             </p>
-                            <p className="text-xs text-muted-foreground leading-relaxed">
+                            <p className="text-xs text-muted-foreground mt-1">
                               {weatherData.plantingWindow.reason}
                             </p>
                             {weatherData.plantingWindow.bestDays.length > 0 && (
-                              <div className="mt-2 flex flex-wrap gap-1">
-                                <span className="text-xs text-muted-foreground">Best days:</span>
-                                {weatherData.plantingWindow.bestDays.map((day, idx) => (
-                                  <span key={idx} className="text-xs px-2 py-0.5 bg-primary/10 text-primary rounded">
-                                    {new Date(day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                                  </span>
-                                ))}
-                              </div>
+                              <p className="text-xs mt-2 font-medium">
+                                Best days: {weatherData.plantingWindow.bestDays.join(', ')}
+                              </p>
                             )}
                           </div>
                         </div>
                       </div>
                     )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-                    {/* 7-Day Forecast */}
-                    <div className="mt-3">
-                      <p className="text-xs font-semibold text-muted-foreground mb-2">7-Day Forecast</p>
-                      <div className="grid grid-cols-7 gap-1">
-                        {weatherData.forecast.map((day, idx) => (
-                          <div 
-                            key={idx} 
-                            className="p-1.5 rounded bg-background border border-border hover:border-primary/50 transition-colors"
-                          >
-                            <p className="text-xs font-semibold text-center mb-1">
-                              {idx === 0 ? 'Today' : new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' })}
-                            </p>
-                            <div className="space-y-0.5">
-                              <p className="text-xs text-center">
-                                <span className="text-primary font-semibold">{day.maxTemp}°</span>
-                                <span className="text-muted-foreground text-[10px]"> / {day.minTemp}°</span>
-                              </p>
-                              {day.precipitation > 0 && (
-                                <div className="flex items-center justify-center gap-0.5">
-                                  <Droplets className="h-2.5 w-2.5 text-blue-500" />
-                                  <span className="text-[10px] text-blue-500">{day.precipitation}mm</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+            <Card className="shadow-lg hover:shadow-xl transition-all duration-300 border-primary/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Leaf className="w-5 h-5 text-primary" />
+                  Crop Selection
+                </CardTitle>
+                <CardDescription>Choose the crop you want to analyze</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="crop">Crop Type</Label>
+                  <Select value={cropType} onValueChange={setCropType}>
+                    <SelectTrigger id="crop">
+                      <SelectValue placeholder="Select crop type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {crops.map(crop => (
+                        <SelectItem key={crop.id} value={crop.id}>
+                          {crop.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {selectedCrop && (
+                  <div className="relative h-48 rounded-lg overflow-hidden border border-primary/20">
+                    <img 
+                      src={selectedCrop.image} 
+                      alt={selectedCrop.name}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
+                      <p className="text-white font-semibold text-lg p-4">{selectedCrop.name}</p>
                     </div>
+                  </div>
+                )}
+
+                <div>
+                  <Label htmlFor="soil">Soil Type</Label>
+                  <Select value={soilType} onValueChange={setSoilType}>
+                    <SelectTrigger id="soil">
+                      <SelectValue placeholder="Select soil type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="clay">Clay</SelectItem>
+                      <SelectItem value="sandy">Sandy</SelectItem>
+                      <SelectItem value="loamy">Loamy</SelectItem>
+                      <SelectItem value="black">Black</SelectItem>
+                      <SelectItem value="red">Red</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="season">Season</Label>
+                  <Select value={season} onValueChange={setSeason}>
+                    <SelectTrigger id="season">
+                      <SelectValue placeholder="Select season" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="kharif">Kharif (Monsoon)</SelectItem>
+                      <SelectItem value="rabi">Rabi (Winter)</SelectItem>
+                      <SelectItem value="zaid">Zaid (Summer)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card className="shadow-lg hover:shadow-xl transition-all duration-300 border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Cloud className="w-5 h-5 text-primary" />
+                Environmental Parameters
+              </CardTitle>
+              <CardDescription>Fine-tune the growing conditions</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="temperature" className="flex items-center gap-2">
+                    <Thermometer className="w-4 h-4" />
+                    Temperature (°C)
+                  </Label>
+                  <Input
+                    id="temperature"
+                    type="number"
+                    placeholder="e.g., 25"
+                    value={temperature}
+                    onChange={(e) => setTemperature(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="rainfall" className="flex items-center gap-2">
+                    <Droplets className="w-4 h-4" />
+                    Rainfall (mm)
+                  </Label>
+                  <Input
+                    id="rainfall"
+                    type="number"
+                    placeholder="e.g., 150"
+                    value={rainfall}
+                    onChange={(e) => setRainfall(e.target.value)}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg hover:shadow-xl transition-all duration-300 border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Dna className="w-5 h-5 text-primary" />
+                Genetic Traits Optimization
+              </CardTitle>
+              <CardDescription>
+                Select desired genetic traits to enhance crop performance
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-primary/5 transition-colors">
+                  <Checkbox
+                    id="pestResistance"
+                    checked={geneticTraits.pestResistance}
+                    onCheckedChange={() => handleGeneticTraitChange('pestResistance')}
+                  />
+                  <div className="flex items-center gap-2">
+                    <Bug className="w-4 h-4 text-red-500" />
+                    <Label htmlFor="pestResistance" className="cursor-pointer">
+                      Pest Resistance
+                    </Label>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-primary/5 transition-colors">
+                  <Checkbox
+                    id="highYield"
+                    checked={geneticTraits.highYield}
+                    onCheckedChange={() => handleGeneticTraitChange('highYield')}
+                  />
+                  <div className="flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4 text-green-500" />
+                    <Label htmlFor="highYield" className="cursor-pointer">
+                      High Yield
+                    </Label>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-primary/5 transition-colors">
+                  <Checkbox
+                    id="droughtTolerance"
+                    checked={geneticTraits.droughtTolerance}
+                    onCheckedChange={() => handleGeneticTraitChange('droughtTolerance')}
+                  />
+                  <div className="flex items-center gap-2">
+                    <Droplets className="w-4 h-4 text-blue-500" />
+                    <Label htmlFor="droughtTolerance" className="cursor-pointer">
+                      Drought Tolerance
+                    </Label>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-primary/5 transition-colors">
+                  <Checkbox
+                    id="diseaseResistance"
+                    checked={geneticTraits.diseaseResistance}
+                    onCheckedChange={() => handleGeneticTraitChange('diseaseResistance')}
+                  />
+                  <div className="flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-purple-500" />
+                    <Label htmlFor="diseaseResistance" className="cursor-pointer">
+                      Disease Resistance
+                    </Label>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-primary/5 transition-colors">
+                  <Checkbox
+                    id="fastGrowth"
+                    checked={geneticTraits.fastGrowth}
+                    onCheckedChange={() => handleGeneticTraitChange('fastGrowth')}
+                  />
+                  <div className="flex items-center gap-2">
+                    <Zap className="w-4 h-4 text-yellow-500" />
+                    <Label htmlFor="fastGrowth" className="cursor-pointer">
+                      Fast Growth
+                    </Label>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-primary/5 transition-colors">
+                  <Checkbox
+                    id="climateAdaptability"
+                    checked={geneticTraits.climateAdaptability}
+                    onCheckedChange={() => handleGeneticTraitChange('climateAdaptability')}
+                  />
+                  <div className="flex items-center gap-2">
+                    <Cloud className="w-4 h-4 text-cyan-500" />
+                    <Label htmlFor="climateAdaptability" className="cursor-pointer">
+                      Climate Adaptability
+                    </Label>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {weatherData?.forecast && weatherData.forecast.length > 0 && (
+            <Card className="shadow-lg hover:shadow-xl transition-all duration-300 border-primary/20">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Cloud className="w-5 h-5 text-primary" />
+                  7-Day Weather Forecast
+                </CardTitle>
+                <CardDescription>
+                  Plan your planting based on upcoming weather conditions
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3">
+                  {weatherData.forecast.map((day, index) => (
+                    <div 
+                      key={day.date}
+                      className={`p-3 rounded-lg border ${
+                        weatherData.plantingWindow?.bestDays.includes(day.date)
+                          ? 'bg-green-500/10 border-green-500/30'
+                          : 'bg-muted/50'
+                      }`}
+                    >
+                      <div className="text-xs font-medium text-center mb-2">
+                        {index === 0 ? 'Today' : new Date(day.date).toLocaleDateString('en', { weekday: 'short' })}
+                      </div>
+                      <div className="space-y-1 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">High</span>
+                          <span className="font-medium">{day.maxTemp}°C</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Low</span>
+                          <span className="font-medium">{day.minTemp}°C</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <Droplets className="w-3 h-3 text-blue-500" />
+                          <span className="font-medium">{day.precipitation}mm</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Humidity</span>
+                          <span className="font-medium">{day.humidity}%</span>
+                        </div>
+                      </div>
+                      {weatherData.plantingWindow?.bestDays.includes(day.date) && (
+                        <div className="mt-2 flex items-center justify-center gap-1 text-xs text-green-700 font-medium">
+                          <Check className="w-3 h-3" />
+                          <span>Best Day</span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card className="shadow-lg hover:shadow-xl transition-all duration-300 border-primary/20">
+            <CardContent className="pt-6">
+              <Button
+                size="lg"
+                className="w-full text-lg py-6"
+                onClick={handlePredict}
+                disabled={predicting || !cropType || !soilType || !season || !temperature || !rainfall}
+              >
+                {predicting ? (
+                  <>
+                    <Brain className="w-5 h-5 mr-2 animate-pulse" />
+                    Analyzing with AI...
+                  </>
+                ) : (
+                  <>
+                    <Brain className="w-5 h-5 mr-2" />
+                    Generate Prediction
                   </>
                 )}
-              </div>
-
-              <div className="space-y-3">
-                <Label>Select Crop Type</Label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                  {crops.map((crop) => (
-                    <button
-                      key={crop.id}
-                      onClick={() => setCropType(crop.id)}
-                      className={`relative group overflow-hidden rounded-lg border-2 transition-all ${
-                        cropType === crop.id
-                          ? "border-primary ring-2 ring-primary/20"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                    >
-                      <div className="aspect-[4/3] overflow-hidden">
-                        <img
-                          src={crop.image}
-                          alt={crop.name}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                        />
-                      </div>
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                      <div className="absolute bottom-0 left-0 right-0 p-2 text-white">
-                        <p className="text-sm font-semibold">{crop.name}</p>
-                      </div>
-                      {cropType === crop.id && (
-                        <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1">
-                          <Check className="h-4 w-4" />
-                        </div>
-                      )}
-                     </button>
-                   ))}
-                 </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="soil">Soil Type</Label>
-                <Select value={soilType} onValueChange={setSoilType}>
-                  <SelectTrigger id="soil">
-                    <SelectValue placeholder="Select soil type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="clay">Clay</SelectItem>
-                    <SelectItem value="loamy">Loamy</SelectItem>
-                    <SelectItem value="sandy">Sandy</SelectItem>
-                    <SelectItem value="silty">Silty</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="season">Season</Label>
-                <Select value={season} onValueChange={setSeason}>
-                  <SelectTrigger id="season">
-                    <SelectValue placeholder="Select season" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="spring">Spring</SelectItem>
-                    <SelectItem value="summer">Summer</SelectItem>
-                    <SelectItem value="autumn">Autumn</SelectItem>
-                    <SelectItem value="winter">Winter</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="temp">Average Temperature (°C)</Label>
-                <Input
-                  id="temp"
-                  type="number"
-                  placeholder="e.g., 25"
-                  value={temperature}
-                  onChange={(e) => setTemperature(e.target.value)}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="rain">Expected Rainfall (mm)</Label>
-                <Input
-                  id="rain"
-                  type="number"
-                  placeholder="e.g., 750"
-                  value={rainfall}
-                  onChange={(e) => setRainfall(e.target.value)}
-                />
-              </div>
-
-              <div className="bg-muted/50 p-4 rounded-lg border border-border">
-                <div className="flex items-center gap-2 mb-3">
-                  <Dna className="h-5 w-5 text-secondary" />
-                  <Label>Genetic Trait Selection</Label>
-                </div>
-                
-                {recommendedTraits.length > 0 && (
-                  <div className="mb-4 p-3 bg-primary/5 border border-primary/20 rounded-lg">
-                    <div className="flex items-start justify-between mb-2">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <Brain className="h-4 w-4 text-primary" />
-                          <span className="text-sm font-semibold text-primary">AI Recommendations</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">Based on your farming conditions</p>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={applyRecommendations}
-                        className="text-xs"
-                      >
-                        Apply All
-                      </Button>
-                    </div>
-                    <div className="space-y-1.5">
-                      {recommendedTraits.map(({ trait, reason }) => (
-                        <div 
-                          key={trait}
-                          className="flex items-start gap-2 text-xs bg-background/50 p-2 rounded"
-                        >
-                          <Leaf className="h-3 w-3 text-primary mt-0.5 flex-shrink-0" />
-                          <div>
-                            <span className="font-medium capitalize">
-                              {trait.replace(/([A-Z])/g, ' $1').trim()}
-                            </span>
-                            <span className="text-muted-foreground"> - {reason}</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="pestResistance"
-                      checked={geneticTraits.pestResistance}
-                      onCheckedChange={() => toggleTrait('pestResistance')}
-                    />
-                    <label
-                      htmlFor="pestResistance"
-                      className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1.5 cursor-pointer ${
-                        recommendedTraits.some(r => r.trait === 'pestResistance') ? 'text-primary' : ''
-                      }`}
-                    >
-                      <Bug className="h-4 w-4 text-primary" />
-                      Pest Resistance
-                      {recommendedTraits.some(r => r.trait === 'pestResistance') && (
-                        <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">✓</span>
-                      )}
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="highYield"
-                      checked={geneticTraits.highYield}
-                      onCheckedChange={() => toggleTrait('highYield')}
-                    />
-                    <label
-                      htmlFor="highYield"
-                      className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1.5 cursor-pointer ${
-                        recommendedTraits.some(r => r.trait === 'highYield') ? 'text-primary' : ''
-                      }`}
-                    >
-                      <TrendingUp className="h-4 w-4 text-accent" />
-                      High Yield
-                      {recommendedTraits.some(r => r.trait === 'highYield') && (
-                        <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">✓</span>
-                      )}
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="droughtTolerance"
-                      checked={geneticTraits.droughtTolerance}
-                      onCheckedChange={() => toggleTrait('droughtTolerance')}
-                    />
-                    <label
-                      htmlFor="droughtTolerance"
-                      className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1.5 cursor-pointer ${
-                        recommendedTraits.some(r => r.trait === 'droughtTolerance') ? 'text-primary' : ''
-                      }`}
-                    >
-                      <Droplets className="h-4 w-4 text-primary" />
-                      Drought Tolerance
-                      {recommendedTraits.some(r => r.trait === 'droughtTolerance') && (
-                        <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">✓</span>
-                      )}
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="diseaseResistance"
-                      checked={geneticTraits.diseaseResistance}
-                      onCheckedChange={() => toggleTrait('diseaseResistance')}
-                    />
-                    <label
-                      htmlFor="diseaseResistance"
-                      className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1.5 cursor-pointer ${
-                        recommendedTraits.some(r => r.trait === 'diseaseResistance') ? 'text-primary' : ''
-                      }`}
-                    >
-                      <Shield className="h-4 w-4 text-secondary" />
-                      Disease Resistance
-                      {recommendedTraits.some(r => r.trait === 'diseaseResistance') && (
-                        <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">✓</span>
-                      )}
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="fastGrowth"
-                      checked={geneticTraits.fastGrowth}
-                      onCheckedChange={() => toggleTrait('fastGrowth')}
-                    />
-                    <label
-                      htmlFor="fastGrowth"
-                      className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1.5 cursor-pointer ${
-                        recommendedTraits.some(r => r.trait === 'fastGrowth') ? 'text-primary' : ''
-                      }`}
-                    >
-                      <Zap className="h-4 w-4 text-accent" />
-                      Fast Growth
-                      {recommendedTraits.some(r => r.trait === 'fastGrowth') && (
-                        <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">✓</span>
-                      )}
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="climateAdaptability"
-                      checked={geneticTraits.climateAdaptability}
-                      onCheckedChange={() => toggleTrait('climateAdaptability')}
-                    />
-                    <label
-                      htmlFor="climateAdaptability"
-                      className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center gap-1.5 cursor-pointer ${
-                        recommendedTraits.some(r => r.trait === 'climateAdaptability') ? 'text-primary' : ''
-                      }`}
-                    >
-                      <Thermometer className="h-4 w-4 text-primary" />
-                      Climate Adaptability
-                      {recommendedTraits.some(r => r.trait === 'climateAdaptability') && (
-                        <span className="text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">✓</span>
-                      )}
-                    </label>
-                  </div>
-                </div>
-              </div>
-
-              <Button
-                onClick={handlePredict} 
-                disabled={predicting}
-                className="w-full"
-                size="lg"
-              >
-                {predicting ? "Analyzing..." : "Generate Prediction"}
               </Button>
             </CardContent>
           </Card>
         </div>
-      </main>
+      </div>
     </div>
   );
 };

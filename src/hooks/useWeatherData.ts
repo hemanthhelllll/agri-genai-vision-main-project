@@ -24,25 +24,65 @@ interface WeatherData {
 interface UseWeatherDataProps {
   latitude?: number;
   longitude?: number;
+  cityName?: string;
   enabled?: boolean;
 }
 
-export const useWeatherData = ({ latitude, longitude, enabled = false }: UseWeatherDataProps = {}) => {
+export const useWeatherData = ({ latitude, longitude, cityName, enabled = false }: UseWeatherDataProps = {}) => {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!enabled || !latitude || !longitude) return;
+    if (!enabled || (!cityName && (!latitude || !longitude))) return;
 
     const fetchWeather = async () => {
       setLoading(true);
       setError(null);
 
       try {
+        let finalLat = latitude;
+        let finalLon = longitude;
+        let locationName = '';
+
+        // If city name is provided, geocode it first
+        if (cityName) {
+          try {
+            const geocodeResponse = await fetch(
+              `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cityName)}&format=json&limit=1&accept-language=en`,
+              {
+                headers: {
+                  'User-Agent': 'Smart-Crop-Forecasting-App'
+                }
+              }
+            );
+
+            if (geocodeResponse.ok) {
+              const geocodeData = await geocodeResponse.json();
+              if (geocodeData && geocodeData.length > 0) {
+                finalLat = parseFloat(geocodeData[0].lat);
+                finalLon = parseFloat(geocodeData[0].lon);
+                locationName = geocodeData[0].display_name?.split(',')[0] || cityName;
+              } else {
+                throw new Error('City not found. Please check the spelling and try again.');
+              }
+            } else {
+              throw new Error('Unable to find city location.');
+            }
+          } catch (geoError) {
+            setError(geoError instanceof Error ? geoError.message : 'Failed to find city location');
+            setLoading(false);
+            return;
+          }
+        }
+
+        if (!finalLat || !finalLon) {
+          throw new Error('Location coordinates not available');
+        }
+
         // Fetch current weather and 7-day forecast data from Open-Meteo API
         const response = await fetch(
-          `https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current=temperature_2m,relative_humidity_2m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,relative_humidity_2m_mean&timezone=auto&forecast_days=7`
+          `https://api.open-meteo.com/v1/forecast?latitude=${finalLat}&longitude=${finalLon}&current=temperature_2m,relative_humidity_2m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,relative_humidity_2m_mean&timezone=auto&forecast_days=7`
         );
 
         if (!response.ok) {
@@ -60,31 +100,33 @@ export const useWeatherData = ({ latitude, longitude, enabled = false }: UseWeat
           humidity: Math.round(data.daily.relative_humidity_2m_mean[index]),
         }));
 
-        // Get location name using reverse geocoding from OpenStreetMap Nominatim
-        let locationName = 'Unknown Location';
-        try {
-          const geoResponse = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=en`,
-            {
-              headers: {
-                'User-Agent': 'Smart-Crop-Forecasting-App'
+        // Get location name using reverse geocoding if not already set from city name
+        if (!locationName) {
+          try {
+            const geoResponse = await fetch(
+              `https://nominatim.openstreetmap.org/reverse?lat=${finalLat}&lon=${finalLon}&format=json&accept-language=en`,
+              {
+                headers: {
+                  'User-Agent': 'Smart-Crop-Forecasting-App'
+                }
               }
+            );
+            
+            if (geoResponse.ok) {
+              const geoData = await geoResponse.json();
+              // Try to get city, town, or village name, fallback to display_name
+              locationName = geoData.address?.city || 
+                            geoData.address?.town || 
+                            geoData.address?.village || 
+                            geoData.address?.state ||
+                            geoData.display_name?.split(',')[0] || 
+                            cityName || 
+                            'Unknown Location';
             }
-          );
-          
-          if (geoResponse.ok) {
-            const geoData = await geoResponse.json();
-            // Try to get city, town, or village name, fallback to display_name
-            locationName = geoData.address?.city || 
-                          geoData.address?.town || 
-                          geoData.address?.village || 
-                          geoData.address?.state ||
-                          geoData.display_name?.split(',')[0] || 
-                          'Unknown Location';
+          } catch (geoError) {
+            console.error('Geocoding error:', geoError);
+            locationName = cityName || 'Unknown Location';
           }
-        } catch (geoError) {
-          console.error('Geocoding error:', geoError);
-          // Keep default 'Unknown Location'
         }
 
         // Analyze planting window based on forecast
@@ -106,7 +148,7 @@ export const useWeatherData = ({ latitude, longitude, enabled = false }: UseWeat
     };
 
     fetchWeather();
-  }, [latitude, longitude, enabled]);
+  }, [latitude, longitude, cityName, enabled]);
 
   return { weatherData, loading, error };
 };
