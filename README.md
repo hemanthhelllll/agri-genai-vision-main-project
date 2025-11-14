@@ -93,7 +93,7 @@ This project is built with:
 	1.	User inputs parameters such as soil type, temperature, humidity, rainfall, and pH value.
 	2.	The data is sent to the backend API or ML model.
 	3.	The model analyzes the input using trained data.
-	4.	The system predicts the best crop to cultivate.
+	4.	The system predicts the crop to cultivate to give beat result in the given condition .
 	5.	The AI layer explains why that crop is suitable and provides growing tips.
  
   **Future Enhancements**
