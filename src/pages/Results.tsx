@@ -47,9 +47,18 @@ const Results = () => {
     return null;
   }
 
+  const traitNames: Record<string, string> = {
+    pestResistance: "Pest Resistance",
+    highYield: "High Yield",
+    droughtTolerance: "Drought Tolerance",
+    diseaseResistance: "Disease Resistance",
+    fastGrowth: "Fast Growth",
+    climateAdaptability: "Climate Adaptability",
+  };
+
   const selectedTraits = Object.entries(predictionData.geneticTraits)
     .filter(([_, selected]) => selected)
-    .map(([trait]) => trait.replace(/([A-Z])/g, ' $1').trim());
+    .map(([trait]) => traitNames[trait as keyof typeof traitNames] || trait);
 
   const getGrowingTips = () => {
     const tips: Array<{ icon: any; title: string; tip: string; category: string }> = [];
@@ -152,7 +161,7 @@ const Results = () => {
     }
 
     // Pest management tip based on genetic traits
-    const hasPestResistance = predictionData.geneticTraits.pestResistance;
+    const hasPestResistance = predictionData.geneticTraits?.pestResistance;
     if (!hasPestResistance) {
       tips.push({
         icon: Bug,
@@ -215,39 +224,42 @@ const Results = () => {
 
     yPosition += 5;
 
-    // Selected Genetic Traits Section
-    pdf.setFontSize(14);
-    pdf.setTextColor(0, 0, 0);
-    pdf.text("Selected Genetic Traits", margin, yPosition);
-    yPosition += 8;
-
-    pdf.setFontSize(10);
-    pdf.setTextColor(60, 60, 60);
-
+    // Selected Genetic Traits
     if (selectedTraits.length > 0) {
-      selectedTraits.forEach(trait => {
-        pdf.text(`• ${trait.charAt(0).toUpperCase() + trait.slice(1)}`, margin + 5, yPosition);
-        yPosition += 6;
-      });
-    } else {
-      pdf.text("No genetic traits selected", margin + 5, yPosition);
-      yPosition += 6;
-    }
-
-    yPosition += 5;
-
-    // AI Recommendations Section
-    if (predictionData.recommendedTraits.length > 0) {
       pdf.setFontSize(14);
       pdf.setTextColor(0, 0, 0);
-      pdf.text("AI-Recommended Traits", margin, yPosition);
+      pdf.text("Selected Genetic Traits", margin, yPosition);
       yPosition += 8;
 
-      pdf.setFontSize(9);
+      pdf.setFontSize(10);
+      pdf.setTextColor(60, 60, 60);
+      selectedTraits.forEach((trait) => {
+        if (yPosition > pageHeight - 20) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        pdf.text(`• ${trait}`, margin + 5, yPosition);
+        yPosition += 6;
+      });
+      yPosition += 5;
+    }
+
+    // AI-Recommended Genetic Traits
+    if (predictionData.recommendedTraits && predictionData.recommendedTraits.length > 0) {
+      pdf.setFontSize(14);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text("AI-Recommended Genetic Traits", margin, yPosition);
+      yPosition += 8;
+
+      pdf.setFontSize(10);
       pdf.setTextColor(60, 60, 60);
       predictionData.recommendedTraits.forEach(({ trait, reason }) => {
-        const traitName = trait.replace(/([A-Z])/g, ' $1').trim();
-        const text = `• ${traitName.charAt(0).toUpperCase() + traitName.slice(1)}: ${reason}`;
+        if (yPosition > pageHeight - 20) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        const traitDisplayName = traitNames[trait as keyof typeof traitNames] || trait.replace(/([A-Z])/g, ' $1').trim();
+        const text = `• ${traitDisplayName}: ${reason}`;
         const lines = pdf.splitTextToSize(text, pageWidth - margin * 2 - 5);
         lines.forEach((line: string) => {
           if (yPosition > pageHeight - 20) {
@@ -260,6 +272,33 @@ const Results = () => {
       });
       yPosition += 5;
     }
+    
+    // Growing Tips
+    pdf.setFontSize(14);
+    pdf.setTextColor(0, 0, 0);
+    pdf.text("Growing Tips", margin, yPosition);
+    yPosition += 8;
+
+    pdf.setFontSize(10);
+    pdf.setTextColor(60, 60, 60);
+    growingTips.forEach((tip) => {
+      if (yPosition > pageHeight - 20) {
+        pdf.addPage();
+        yPosition = margin;
+      }
+      const text = `${tip.title}: ${tip.tip}`;
+      const lines = pdf.splitTextToSize(text, pageWidth - margin * 2 - 5);
+      lines.forEach((line: string) => {
+        if (yPosition > pageHeight - 20) {
+          pdf.addPage();
+          yPosition = margin;
+        }
+        pdf.text(line, margin + 5, yPosition);
+        yPosition += 5;
+      });
+      yPosition += 3;
+    });
+    yPosition += 5;
 
     // Prediction Results Section
     pdf.setFontSize(14);
