@@ -108,6 +108,72 @@ const Dashboard = () => {
     }
   }, [weatherError]);
 
+  const getSuggestedTraits = () => {
+    const suggestions: Array<{ trait: string; reason: string }> = [];
+    const temp = parseFloat(temperature || "0");
+    const rain = parseFloat(rainfall || "0");
+
+    // Temperature-based suggestions
+    if (temp > 30) {
+      suggestions.push({
+        trait: "droughtTolerance",
+        reason: "High temperatures increase water stress on crops"
+      });
+      suggestions.push({
+        trait: "climateAdaptability",
+        reason: "Adaptable varieties perform better in extreme heat"
+      });
+    } else if (temp < 15) {
+      suggestions.push({
+        trait: "climateAdaptability",
+        reason: "Cold-resistant varieties are essential for low temperatures"
+      });
+    }
+
+    // Rainfall-based suggestions
+    if (rain < 500) {
+      suggestions.push({
+        trait: "droughtTolerance",
+        reason: "Low rainfall areas require drought-resistant varieties"
+      });
+    } else if (rain > 1500) {
+      suggestions.push({
+        trait: "diseaseResistance",
+        reason: "High moisture increases disease susceptibility"
+      });
+    }
+
+    // Season-based suggestions
+    if (season === "monsoon") {
+      suggestions.push({
+        trait: "diseaseResistance",
+        reason: "Monsoon season has higher disease pressure"
+      });
+    }
+
+    // Always recommend high yield for better productivity
+    suggestions.push({
+      trait: "highYield",
+      reason: "Maximizes crop productivity and farmer income"
+    });
+
+    // Pest resistance is always beneficial
+    suggestions.push({
+      trait: "pestResistance",
+      reason: "Reduces crop losses and pesticide costs"
+    });
+
+    // Fast growth for quick harvest cycles
+    if (season === "spring" || season === "autumn") {
+      suggestions.push({
+        trait: "fastGrowth",
+        reason: "Shorter growing season benefits from fast-maturing varieties"
+      });
+    }
+
+    return suggestions;
+  };
+
   const handlePredict = () => {
     if (!cropType || !soilType || !season || !temperature || !rainfall) {
       toast.error("Please fill in all fields");
@@ -117,19 +183,22 @@ const Dashboard = () => {
     setPredicting(true);
     
     setTimeout(() => {
-      const yieldPrediction = Math.floor(Math.random() * 40) + 60;
-      const geneticTraitsArray = Object.keys(geneticTraits).filter(key => geneticTraits[key as keyof typeof geneticTraits]);
+      const recommendedTraits = getSuggestedTraits();
       
       navigate("/results", {
         state: {
           cropType,
           soilType,
           season,
-          temperature: parseFloat(temperature),
-          rainfall: parseFloat(rainfall),
-          yieldPrediction,
-          geneticTraits: geneticTraitsArray,
+          temperature,
+          rainfall,
+          geneticTraits,
+          location: {
+            lat: parseFloat(location.latitude) || 0,
+            lon: parseFloat(location.longitude) || 0,
+          },
           weatherData,
+          recommendedTraits,
         },
       });
       setPredicting(false);
@@ -331,9 +400,11 @@ const Dashboard = () => {
                       <SelectValue placeholder="Select season" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="kharif">Kharif (Monsoon)</SelectItem>
-                      <SelectItem value="rabi">Rabi (Winter)</SelectItem>
-                      <SelectItem value="zaid">Zaid (Summer)</SelectItem>
+                      <SelectItem value="summer">Summer</SelectItem>
+                      <SelectItem value="winter">Winter</SelectItem>
+                      <SelectItem value="monsoon">Monsoon</SelectItem>
+                      <SelectItem value="spring">Spring</SelectItem>
+                      <SelectItem value="autumn">Autumn</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -387,96 +458,154 @@ const Dashboard = () => {
                 <Dna className="w-5 h-5 text-primary" />
                 Genetic Traits Optimization
               </CardTitle>
-              <CardDescription>
-                Select desired genetic traits to enhance crop performance
-              </CardDescription>
+              <CardDescription>Select desired genetic traits for your crop</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-primary/5 transition-colors">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-start space-x-3 p-3 rounded-lg hover:bg-accent/50 transition-colors">
                   <Checkbox
                     id="pestResistance"
                     checked={geneticTraits.pestResistance}
-                    onCheckedChange={() => handleGeneticTraitChange('pestResistance')}
+                    onCheckedChange={() => handleGeneticTraitChange("pestResistance")}
                   />
-                  <div className="flex items-center gap-2">
-                    <Bug className="w-4 h-4 text-red-500" />
-                    <Label htmlFor="pestResistance" className="cursor-pointer">
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor="pestResistance"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-2"
+                    >
+                      <Bug className="w-4 h-4 text-primary" />
                       Pest Resistance
-                    </Label>
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      Enhanced protection against common pests
+                    </p>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-primary/5 transition-colors">
+                <div className="flex items-start space-x-3 p-3 rounded-lg hover:bg-accent/50 transition-colors">
                   <Checkbox
                     id="highYield"
                     checked={geneticTraits.highYield}
-                    onCheckedChange={() => handleGeneticTraitChange('highYield')}
+                    onCheckedChange={() => handleGeneticTraitChange("highYield")}
                   />
-                  <div className="flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4 text-green-500" />
-                    <Label htmlFor="highYield" className="cursor-pointer">
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor="highYield"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-2"
+                    >
+                      <TrendingUp className="w-4 h-4 text-primary" />
                       High Yield
-                    </Label>
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      Optimized for maximum crop production
+                    </p>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-primary/5 transition-colors">
+                <div className="flex items-start space-x-3 p-3 rounded-lg hover:bg-accent/50 transition-colors">
                   <Checkbox
                     id="droughtTolerance"
                     checked={geneticTraits.droughtTolerance}
-                    onCheckedChange={() => handleGeneticTraitChange('droughtTolerance')}
+                    onCheckedChange={() => handleGeneticTraitChange("droughtTolerance")}
                   />
-                  <div className="flex items-center gap-2">
-                    <Droplets className="w-4 h-4 text-blue-500" />
-                    <Label htmlFor="droughtTolerance" className="cursor-pointer">
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor="droughtTolerance"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-2"
+                    >
+                      <Droplets className="w-4 h-4 text-primary" />
                       Drought Tolerance
-                    </Label>
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      Survives with minimal water requirements
+                    </p>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-primary/5 transition-colors">
+                <div className="flex items-start space-x-3 p-3 rounded-lg hover:bg-accent/50 transition-colors">
                   <Checkbox
                     id="diseaseResistance"
                     checked={geneticTraits.diseaseResistance}
-                    onCheckedChange={() => handleGeneticTraitChange('diseaseResistance')}
+                    onCheckedChange={() => handleGeneticTraitChange("diseaseResistance")}
                   />
-                  <div className="flex items-center gap-2">
-                    <Shield className="w-4 h-4 text-purple-500" />
-                    <Label htmlFor="diseaseResistance" className="cursor-pointer">
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor="diseaseResistance"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-2"
+                    >
+                      <Shield className="w-4 h-4 text-primary" />
                       Disease Resistance
-                    </Label>
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      Better immunity against crop diseases
+                    </p>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-primary/5 transition-colors">
+                <div className="flex items-start space-x-3 p-3 rounded-lg hover:bg-accent/50 transition-colors">
                   <Checkbox
                     id="fastGrowth"
                     checked={geneticTraits.fastGrowth}
-                    onCheckedChange={() => handleGeneticTraitChange('fastGrowth')}
+                    onCheckedChange={() => handleGeneticTraitChange("fastGrowth")}
                   />
-                  <div className="flex items-center gap-2">
-                    <Zap className="w-4 h-4 text-yellow-500" />
-                    <Label htmlFor="fastGrowth" className="cursor-pointer">
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor="fastGrowth"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-2"
+                    >
+                      <Zap className="w-4 h-4 text-primary" />
                       Fast Growth
-                    </Label>
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      Reduced time to harvest
+                    </p>
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3 p-3 rounded-lg border hover:bg-primary/5 transition-colors">
+                <div className="flex items-start space-x-3 p-3 rounded-lg hover:bg-accent/50 transition-colors">
                   <Checkbox
                     id="climateAdaptability"
                     checked={geneticTraits.climateAdaptability}
-                    onCheckedChange={() => handleGeneticTraitChange('climateAdaptability')}
+                    onCheckedChange={() => handleGeneticTraitChange("climateAdaptability")}
                   />
-                  <div className="flex items-center gap-2">
-                    <Cloud className="w-4 h-4 text-cyan-500" />
-                    <Label htmlFor="climateAdaptability" className="cursor-pointer">
+                  <div className="grid gap-1.5 leading-none">
+                    <label
+                      htmlFor="climateAdaptability"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex items-center gap-2"
+                    >
+                      <Thermometer className="w-4 h-4 text-primary" />
                       Climate Adaptability
-                    </Label>
+                    </label>
+                    <p className="text-xs text-muted-foreground">
+                      Adapts to varying climate conditions
+                    </p>
                   </div>
                 </div>
               </div>
+              
+              {(cropType || soilType || season || temperature || rainfall) && (
+                <div className="mt-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <Brain className="w-5 h-5 text-primary mt-0.5" />
+                    <div>
+                      <h4 className="font-semibold text-sm mb-2">AI Suggestions Based on Your Inputs</h4>
+                      <p className="text-xs text-muted-foreground mb-2">
+                        Our system recommends the following traits for optimal results:
+                      </p>
+                      <ul className="text-xs space-y-1">
+                        {getSuggestedTraits().slice(0, 3).map((suggestion, index) => (
+                          <li key={index} className="flex items-start gap-1">
+                            <Check className="w-3 h-3 text-primary mt-0.5 flex-shrink-0" />
+                            <span>
+                              <strong>{suggestion.trait.replace(/([A-Z])/g, ' $1').trim()}:</strong> {suggestion.reason}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
