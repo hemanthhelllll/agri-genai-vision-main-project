@@ -35,7 +35,164 @@ const crops = [
   { id: "coffee", name: "Coffee", image: coffeeImg },
   { id: "tea", name: "Tea", image: teaImg },
   { id: "mustard", name: "Mustard", image: mustardImg },
+  { id: "maize", name: "Maize", image: cornImg },
+  { id: "groundnut", name: "Groundnut", image: soybeanImg },
+  { id: "chickpea", name: "Chickpea", image: soybeanImg },
+  { id: "lentil", name: "Lentil", image: soybeanImg },
+  { id: "peas", name: "Peas", image: soybeanImg },
+  { id: "onion", name: "Onion", image: potatoImg },
+  { id: "garlic", name: "Garlic", image: potatoImg },
+  { id: "cabbage", name: "Cabbage", image: tomatoImg },
+  { id: "cauliflower", name: "Cauliflower", image: tomatoImg },
+  { id: "carrot", name: "Carrot", image: potatoImg },
+  { id: "radish", name: "Radish", image: potatoImg },
+  { id: "spinach", name: "Spinach", image: tomatoImg },
+  { id: "lettuce", name: "Lettuce", image: tomatoImg },
+  { id: "cucumber", name: "Cucumber", image: tomatoImg },
+  { id: "pumpkin", name: "Pumpkin", image: tomatoImg },
+  { id: "watermelon", name: "Watermelon", image: tomatoImg },
+  { id: "mango", name: "Mango", image: coffeeImg },
+  { id: "banana", name: "Banana", image: sugarcaneImg },
+  { id: "apple", name: "Apple", image: coffeeImg },
+  { id: "orange", name: "Orange", image: coffeeImg },
+  { id: "grapes", name: "Grapes", image: coffeeImg },
+  { id: "papaya", name: "Papaya", image: coffeeImg },
+  { id: "guava", name: "Guava", image: coffeeImg },
 ];
+
+// AI-based crop recommendation logic
+const getCropRecommendations = (soilType: string, temperature: number, rainfall: number, season: string) => {
+  const recommendations: { crop: string; reason: string; score: number }[] = [];
+  
+  crops.forEach(crop => {
+    let score = 50; // Base score
+    let reasons: string[] = [];
+
+    // Rice recommendations
+    if (crop.id === "rice") {
+      if (soilType === "clay" || soilType === "loamy") { score += 20; reasons.push("ideal soil type"); }
+      if (rainfall > 150) { score += 20; reasons.push("high rainfall suitable"); }
+      if (temperature >= 20 && temperature <= 35) { score += 15; reasons.push("optimal temperature"); }
+      if (season === "monsoon") { score += 15; reasons.push("perfect season"); }
+    }
+
+    // Wheat recommendations
+    if (crop.id === "wheat") {
+      if (soilType === "loamy" || soilType === "clay") { score += 20; reasons.push("ideal soil"); }
+      if (temperature >= 10 && temperature <= 25) { score += 20; reasons.push("optimal temperature"); }
+      if (rainfall >= 50 && rainfall <= 100) { score += 15; reasons.push("moderate rainfall needed"); }
+      if (season === "winter") { score += 20; reasons.push("winter crop"); }
+    }
+
+    // Cotton recommendations
+    if (crop.id === "cotton") {
+      if (soilType === "black" || soilType === "loamy") { score += 25; reasons.push("black soil ideal"); }
+      if (temperature >= 21 && temperature <= 30) { score += 15; reasons.push("warm climate suitable"); }
+      if (rainfall >= 50 && rainfall <= 100) { score += 10; reasons.push("moderate rainfall"); }
+      if (season === "summer" || season === "monsoon") { score += 15; reasons.push("suitable season"); }
+    }
+
+    // Sugarcane recommendations
+    if (crop.id === "sugarcane") {
+      if (soilType === "loamy" || soilType === "clay") { score += 20; reasons.push("rich soil needed"); }
+      if (temperature >= 20 && temperature <= 35) { score += 15; reasons.push("warm climate"); }
+      if (rainfall > 150) { score += 20; reasons.push("high water requirement"); }
+      if (season === "monsoon") { score += 15; reasons.push("monsoon planting"); }
+    }
+
+    // Potato recommendations
+    if (crop.id === "potato") {
+      if (soilType === "sandy" || soilType === "loamy") { score += 20; reasons.push("well-drained soil"); }
+      if (temperature >= 15 && temperature <= 25) { score += 20; reasons.push("cool climate preferred"); }
+      if (season === "winter" || season === "autumn") { score += 15; reasons.push("winter crop"); }
+    }
+
+    // Tomato recommendations
+    if (crop.id === "tomato") {
+      if (soilType === "loamy" || soilType === "sandy") { score += 20; reasons.push("good drainage"); }
+      if (temperature >= 18 && temperature <= 27) { score += 20; reasons.push("moderate temperature"); }
+      if (season === "winter" || season === "spring") { score += 10; reasons.push("suitable season"); }
+    }
+
+    // Corn/Maize recommendations
+    if (crop.id === "corn" || crop.id === "maize") {
+      if (soilType === "loamy" || soilType === "sandy") { score += 20; reasons.push("well-drained soil"); }
+      if (temperature >= 20 && temperature <= 30) { score += 15; reasons.push("warm season crop"); }
+      if (rainfall >= 60 && rainfall <= 120) { score += 15; reasons.push("moderate rainfall"); }
+      if (season === "summer" || season === "monsoon") { score += 10; reasons.push("warm season"); }
+    }
+
+    // Soybean recommendations
+    if (crop.id === "soybean") {
+      if (soilType === "loamy" || soilType === "clay") { score += 20; reasons.push("fertile soil"); }
+      if (temperature >= 20 && temperature <= 30) { score += 15; reasons.push("warm climate"); }
+      if (rainfall >= 50 && rainfall <= 100) { score += 15; reasons.push("moderate water"); }
+      if (season === "monsoon" || season === "summer") { score += 10; reasons.push("summer crop"); }
+    }
+
+    // Groundnut recommendations
+    if (crop.id === "groundnut") {
+      if (soilType === "sandy" || soilType === "loamy") { score += 25; reasons.push("sandy loam ideal"); }
+      if (temperature >= 20 && temperature <= 30) { score += 15; reasons.push("warm temperature"); }
+      if (rainfall >= 50 && rainfall <= 75) { score += 10; reasons.push("moderate rainfall"); }
+      if (season === "monsoon") { score += 15; reasons.push("monsoon crop"); }
+    }
+
+    // Chickpea recommendations
+    if (crop.id === "chickpea") {
+      if (soilType === "loamy" || soilType === "clay") { score += 20; reasons.push("well-drained soil"); }
+      if (temperature >= 10 && temperature <= 25) { score += 20; reasons.push("cool season"); }
+      if (rainfall >= 40 && rainfall <= 60) { score += 15; reasons.push("low-moderate rainfall"); }
+      if (season === "winter") { score += 20; reasons.push("rabi crop"); }
+    }
+
+    // Onion recommendations
+    if (crop.id === "onion") {
+      if (soilType === "loamy" || soilType === "sandy") { score += 20; reasons.push("well-drained soil"); }
+      if (temperature >= 13 && temperature <= 24) { score += 15; reasons.push("cool climate"); }
+      if (season === "winter") { score += 15; reasons.push("winter crop"); }
+    }
+
+    // Mango recommendations
+    if (crop.id === "mango") {
+      if (soilType === "loamy" || soilType === "sandy") { score += 20; reasons.push("deep well-drained soil"); }
+      if (temperature >= 24 && temperature <= 30) { score += 20; reasons.push("tropical climate"); }
+      if (rainfall >= 75 && rainfall <= 250) { score += 10; reasons.push("adequate rainfall"); }
+      if (season === "summer" || season === "monsoon") { score += 10; reasons.push("warm season fruit"); }
+    }
+
+    // Banana recommendations
+    if (crop.id === "banana") {
+      if (soilType === "loamy" || soilType === "clay") { score += 20; reasons.push("rich fertile soil"); }
+      if (temperature >= 15 && temperature <= 35) { score += 15; reasons.push("tropical/subtropical"); }
+      if (rainfall > 100) { score += 20; reasons.push("high water requirement"); }
+    }
+
+    // Coffee recommendations
+    if (crop.id === "coffee") {
+      if (soilType === "loamy" || soilType === "volcanic") { score += 25; reasons.push("rich volcanic soil"); }
+      if (temperature >= 15 && temperature <= 28) { score += 20; reasons.push("cool highlands"); }
+      if (rainfall >= 150 && rainfall <= 250) { score += 15; reasons.push("high rainfall area"); }
+    }
+
+    // Tea recommendations
+    if (crop.id === "tea") {
+      if (soilType === "loamy" || soilType === "acidic") { score += 25; reasons.push("acidic well-drained soil"); }
+      if (temperature >= 10 && temperature <= 30) { score += 15; reasons.push("cool to warm climate"); }
+      if (rainfall >= 150 && rainfall <= 300) { score += 20; reasons.push("high rainfall region"); }
+    }
+
+    if (reasons.length > 0) {
+      recommendations.push({
+        crop: crop.name,
+        reason: reasons.join(", "),
+        score: Math.min(score, 100)
+      });
+    }
+  });
+
+  return recommendations.sort((a, b) => b.score - a.score).slice(0, 5);
+};
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -410,6 +567,54 @@ const Dashboard = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* AI Crop Recommendations */}
+            {soilType && temperature && rainfall && season && (
+              <Card className="shadow-lg hover:shadow-xl transition-all duration-300 border-green-500/30 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-400">
+                    <Brain className="w-5 h-5" />
+                    AI Crop Recommendations
+                  </CardTitle>
+                  <CardDescription>Based on your soil and weather conditions</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {getCropRecommendations(
+                      soilType,
+                      parseFloat(temperature || "0"),
+                      parseFloat(rainfall || "0"),
+                      season
+                    ).map((rec, index) => (
+                      <div
+                        key={index}
+                        className={`p-4 rounded-lg border-2 ${
+                          index === 0
+                            ? 'border-green-500 bg-green-50 dark:bg-green-950/30'
+                            : 'border-green-200 bg-white dark:bg-gray-900/50'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center gap-2">
+                            {index === 0 && <Check className="w-5 h-5 text-green-600" />}
+                            <span className="font-semibold text-lg">{rec.crop}</span>
+                          </div>
+                          <span className="text-sm font-medium px-3 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300">
+                            {rec.score}% Match
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{rec.reason}</p>
+                        {index === 0 && (
+                          <p className="text-xs mt-2 text-green-600 dark:text-green-400 font-medium">
+                            ⭐ Highly Recommended for your conditions
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           <Card className="shadow-lg hover:shadow-xl transition-all duration-300 border-primary/20">
